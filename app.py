@@ -5,12 +5,12 @@ from building import building
 st.header("Designcalculation of shearwalls.")
 st.write("NOT for use in real-life, as this is NOT a full implementation")
 
-# Building Geometry Parameters
-st.sidebar.header("Building Geometry Parameters")
+# Building Parameters
+st.sidebar.header("Building Parameters")
 bd_geom = building.Building_geometry()
-bd_geom.width = st.sidebar.number_input("Building Width (m)", value=40, step=1)
+bd_geom.width = st.sidebar.number_input("Building Width (m)", value=50, step=1)
 bd_geom.depth = st.sidebar.number_input("Building Depth (m)", value=15, step=1)
-bd_geom.height = st.sidebar.number_input("Building Height (m)", value=25, step=1)
+bd_geom.height = st.sidebar.number_input("Building Height (m)", value=20.0, step=0.5)
 bd_geom.no_stories = st.sidebar.slider(
     "Number of stories: ", 
     min_value=1, 
@@ -21,18 +21,44 @@ bd_geom.N_vd = st.sidebar.number_input("Building Weight N'vd (kN)", value=250000
 bd_geom.pd_wind = st.sidebar.number_input("Windforce (kN/m2)", value=1.0, step=0.05)
 bd_geom.no_shearwalls = st.sidebar.slider(
     "Number of shearwalls: ", 
-    min_value=1, 
-    max_value=4, 
-    value=1
+    min_value=1,
+    max_value=4,
+    value=2
 )
 st.sidebar.write("")
 
-# create list with shearwall objects
-shearwalls = [building.Shearwall() for _ in range(bd_geom.no_shearwalls)]
+bd_geom.calc_geom_data()
+
+
+insertion_points = []
+if bd_geom.no_shearwalls == 1:
+    insertion_points.append(bd_geom.width / 2)
+else:
+    for i in range(bd_geom.no_shearwalls):
+        insertion_points.append(i * bd_geom.width / (bd_geom.no_shearwalls - 1))
+
     
+
+# create list with shearwall objects
+shearwalls = []
+for idx in range(bd_geom.no_shearwalls):
+    x = building.Shearwall()
+    x.label = f"Shearwall_{idx + 1}"
+    x.height = bd_geom.height
+    if idx == 0:
+        x.aligned = "left"
+    elif idx == bd_geom.no_shearwalls - 1:
+        x.aligned = "right"
+    else:
+        x.aligned = "center"
+
+
+    x.insert_point = [insertion_points[idx],0]
+    x.calc_geom_data()
+    shearwalls.append(x)
+
 fig = building.plot_building(bd_geom, shearwalls)
 
-# fig
 st.plotly_chart(fig, use_container_width=True)
 
 
