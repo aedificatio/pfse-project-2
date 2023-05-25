@@ -14,10 +14,12 @@ from rich import print as rprint
 from dataclasses import dataclass, field
 from typing import Dict, Optional, Tuple
 from handcalcs.decorator import handcalc
+import pandas as pd
+from building.plot_geometry import convert_geom_data
 
 
 @dataclass
-class Building_geometry:
+class Building:
     """
     Datatype represents the geometry of a building.
     """
@@ -25,9 +27,17 @@ class Building_geometry:
     depth: float = 15.0  # m
     height: float = 25.0  # m
     no_stories: int = 5  # amount
-    no_shearwalls: int = Optional
-    N_vd: int = Optional  # kN
-    pd_wind: float = Optional[float]  # kN/m2
+    no_shearwalls: Optional[int] = None
+    N_vd: Optional[int] = None  # kN
+    pd_wind: Optional[float] = None # kN/m2
+    
+    def initialize_data(self):
+        """
+        """
+        self.calc_geom_data()
+        self.sw_insert_points()
+        self.create_shearwalls()
+        return
 
     def calc_geom_data(self):
         """
@@ -52,6 +62,39 @@ class Building_geometry:
         self.edges = edges
         self.faces = faces
         return
+    
+    def sw_insert_points(self):
+        """
+        """
+        insertion_points = []
+        if self.no_shearwalls == 1:
+            insertion_points.append(self.width / 2)
+        else:
+            for i in range(self.no_shearwalls):
+                insertion_points.append(i * self.width / (self.no_shearwalls - 1))
+        self.sw_insert_points = insertion_points
+        return
+    
+    def create_shearwalls(self):
+        """
+        """
+        shearwalls = []
+        for idx in range(self.no_shearwalls):
+            x = Shearwall()
+            x.label = f"Shearwall_{idx + 1}"
+            x.height = self.height
+            if idx == 0:
+                x.aligned = "left"
+            elif idx == self.no_shearwalls - 1:
+                x.aligned = "right"
+            else:
+                x.aligned = "center"
+            x.insert_point = [self.sw_insert_points[idx],0]
+            x.calc_geom_data()
+            # x.section = building.calculate_section(x)
+            shearwalls.append(x)
+        self.shearwalls = shearwalls
+        return
 
 
 @dataclass
@@ -69,6 +112,7 @@ class Shearwall:
     aligned: str = 'left'  # 'left', 'center' or 'right'
     height: float = 25.0  # m
     insert_point: list = field(default_factory=list)
+    section: Optional[float] = None
 
 
     def calc_geom_data(self):
@@ -83,7 +127,7 @@ class Shearwall:
         'nodes_floor' # [[x, y],...] nodes in x, y on ground level
         'edges_floor' # [[i, j],...] meaning nodes numbers on ground level
         """
-        
+
         h = (self.top_flange_height / 2 + self.web_height + self.bot_flange_height / 2) / 1000
 
         if self.aligned == 'center':
@@ -112,28 +156,6 @@ class Shearwall:
         self.faces = faces
         return
 
-    
-def convert_geom_data(nodes_floor, edges_floor, height):
-    """
-    """
-    # Add height to node coordinates
-    nodes = [node_floor + [0] for node_floor in nodes_floor]
-    nodes += [node_floor + [height] for node_floor in nodes_floor]
-    
-    # Define edges 3d
-    start_roof_idx = int(len(nodes) / 2)
-    # Horizontal edges
-    edges = edges_floor + [[x + start_roof_idx, y + start_roof_idx] for x, y in edges_floor]
-    # Vertical edges
-    edges += [[idx, idx + start_roof_idx] for idx, node in enumerate(nodes_floor)]
-    
-    faces = []
-    for edge in edges_floor:
-        faces.append(edge + [edge[0] + start_roof_idx])
-        faces.append([edge[0] + start_roof_idx, edge[1] + start_roof_idx, edge[1]])
-    return (nodes, edges, faces)
-
-
 def add_roof_faces(nodes, edges):
     """
     """
@@ -141,95 +163,5 @@ def add_roof_faces(nodes, edges):
     roof_faces = [[edges[0][0] + start_roof_idx, edges[1][0] + start_roof_idx, edges[2][0] + start_roof_idx]]
     roof_faces.append([edges[0][0] + start_roof_idx, edges[2][0] + start_roof_idx, edges[3][0] + start_roof_idx])
     return roof_faces
-
-
-def plot_building(building, shearwalls: Optional= None):
-    """
-    """
-    layout = go.Layout(
-        autosize=False, width=1200, height=800,
-        title = 'Simplified Building Viewport',
-        scene = dict(
-            aspectmode='data',
-            aspectratio=go.layout.scene.Aspectratio(x=0.4, y=0.4, z=0.4)
-        ),
-        # xaxis = dict(
-        #     scaleratio = 1,
-        # ),
-        # yaxis = dict(
-        #     # scaleratio = 1,
-        #     scaleanchor = 'x'
-        # )
-    )
-    fig = go.Figure(layout=layout)
-    
-    # plot building contour & faces
-    # building.calc_geom_data()
-    plot_item_contour(fig, building.nodes, building.edges, color='rgb(0, 0, 255)', line_width=2, marker_size=2)
-    plot_item_faces(fig, building.nodes, building.faces, opacity=0.25, color='rgb(0, 0, 255)')
-
-    # plot cores contour & faces
-    for shearwall in shearwalls:
-        # shearwall.calc_geom_data()
-        plot_item_contour(fig, shearwall.nodes, shearwall.edges, color='rgb(255, 0, 0)', line_width=2, marker_size=2)
-        plot_item_faces(fig, shearwall.nodes, shearwall.faces, opacity=0.25, color='rgb(255, 0, 0)')
-    
-    fig.layout.height = 1000
-    fig.layout.width = 1000
-
-    fig.layout.scene.xaxis.range = (0, building.width * 2.2)
-    fig.layout.scene.yaxis.range = (0, building.depth * 2.2)
-    # fig.layout.xaxis.scaleratio = 1
-    # fig.layout.yaxis.scaleratio = 1
-    # fig.update_scenes(Aspectratio(x=2, y=2, z=2))
-    fig.update_scenes(xaxis_autorange="reversed")
-        
-    return fig
-
-
-def plot_item_faces(fig, nodes, faces, opacity=0.25, color: str = 'rgb(0, 0, 255)'):
-    """
-    """
-    # Add building_faces
-    x, y, z = zip(*nodes)
-    i, j, k = zip(*faces)
-
-    fig.add_trace(
-        go.Mesh3d(
-            x = x,
-            y = y,
-            z = z,
-            i = i,
-            j = j,
-            k = k,
-            opacity = opacity,
-            color = color
-        )
-    )
-    return fig
-
-
-def plot_item_contour(fig, nodes, edges, color: str='rgb(0, 0, 255)', line_width: int=2, marker_size: int =2):
-    """
-    """
-    for i_node, j_node in edges:
-        x_coord_i, y_coord_i, z_coord_i = nodes[i_node]
-        x_coord_j, y_coord_j, z_coord_j = nodes[j_node]
-
-        trace = go.Scatter3d(
-            x = [x_coord_i, x_coord_j],
-            y = [y_coord_i, y_coord_j],
-            z = [z_coord_i, z_coord_j],
-            line = {
-                'color': color,
-                'width': line_width,
-            },
-            marker = {
-                'size': marker_size
-            },
-            showlegend = False
-        )
-        fig.add_trace(trace)
-    return fig
 
 
