@@ -6,8 +6,10 @@ import streamlit as st
 import pycba as cba
 import numpy as np
 import matplotlib
+
 import matplotlib.pyplot as plt
 import matplotlib.markers as markers
+import matplotlib.patches as patches
 from plotly import graph_objects as go
 import plotly.express as px
 from rich import print as rprint
@@ -91,10 +93,13 @@ class Building:
                 x.aligned = "center"
             x.insert_point = [self.sw_insert_points[idx],0]
             x.calc_geom_data()
-            # x.section = building.calculate_section(x)
+            x = calculate_section(x)
+            x = plot_sw(x)
             shearwalls.append(x)
         self.shearwalls = shearwalls
         return
+    
+
 
 
 @dataclass
@@ -105,7 +110,7 @@ class Shearwall:
     label: str = 'name'
     top_flange_width: int = 1400  # mm
     top_flange_height: int = 250  # mm
-    web_width: int = 2500  # mm
+    web_width: int = 250  # mm
     web_height: int = 5000  # mm
     bot_flange_width: int = 1400  # mm
     bot_flange_height: int = 250  # mm
@@ -164,4 +169,88 @@ def add_roof_faces(nodes, edges):
     roof_faces.append([edges[0][0] + start_roof_idx, edges[2][0] + start_roof_idx, edges[3][0] + start_roof_idx])
     return roof_faces
 
+def calculate_section(wall: Shearwall):
+    """
+    """
+    layers = [
+        [wall.top_flange_width, wall.top_flange_height],
+        [wall.web_width, wall.web_height],
+        [wall.bot_flange_width, wall.bot_flange_height]
+    ]
 
+    df = pd.DataFrame(layers, columns=["b", "h"])
+    df['A'] = df['b'] * df['h']
+    df['Iy_eigen'] = 1/12 * df['b'] * df['h']**3
+    df['center_top'] = df['h'].cumsum() - df['h'] / 2
+    df['S'] = df['A'] * df['center_top']
+
+    e_top = df['S'].sum() / df['A'].sum()
+    e_bot = df['h'].sum() - e_top
+
+    df['zwp_center_el'] = e_top - df['center_top']
+    df['Aaa'] = df['A'] * df['zwp_center_el']**2
+    
+    wall.A = df['A'].sum()
+    wall.Iy = df['Iy_eigen'].sum() + df['Aaa'].sum()
+    wall.h = df['h'].sum() 
+    wall.e_top = e_top
+    wall.e_bot = e_bot
+    return wall
+
+def plot_sw(wall: Shearwall):
+    """
+    """
+    go.Figure()
+    fig = go.Figure()
+    tf_w = wall.top_flange_width
+    tf_h = wall.top_flange_height
+    web_w = wall.web_width
+    bf_w = wall.bot_flange_width
+    bf_h = wall.bot_flange_height
+
+    e_top = wall.e_top
+    e_bot = wall.e_bot
+
+    if wall.aligned == 'left':
+        tf_x = [0, tf_w, tf_w, 0]
+        web_x = [0, web_w, web_w, 0]
+        bf_x = [0, bf_w, bf_w, 0]
+    elif wall.aligned == 'center':
+        tf_x = [-tf_w / 2, tf_w / 2, tf_w / 2, -tf_w / 2]
+        web_x = [-web_w / 2, web_w / 2, web_w / 2, -web_w / 2]
+        bf_x = [-bf_w / 2, bf_w / 2, bf_w / 2, -bf_w / 2]
+    else:
+        tf_x = [-bf_w, 0, 0, -bf_w]
+        web_x = [-web_w, 0, 0, -web_w]
+        bf_x = [-bf_w, 0, 0, -bf_w]
+
+    tf = {'x': tf_x, 'y': [e_top, e_top, e_top - tf_h, e_top - tf_h]}
+    web = {'x': web_x, 'y': [-e_bot + bf_h, -e_bot + bf_h, e_top - tf_h, e_top - tf_h]}
+    bf = {'x': bf_x, 'y': [-e_bot, -e_bot, -e_bot + bf_h, -e_bot + bf_h]}
+
+    items = [tf, web, bf]
+
+    for item in items:
+        fig.add_trace(go.Scatter(
+            x=item['x'],
+            y=item['y'],
+            fill="toself",
+            fillcolor='royalblue',
+            line_color='royalblue',
+            )
+        )
+
+    fig.update_yaxes(
+        scaleanchor="x",
+        scaleratio=1,
+    )
+
+    fig.update_layout(
+        title = wall.label,
+        showlegend=False,
+        width=500,
+        height=600,
+    )
+
+    wall.plot = fig
+    return wall

@@ -33,4 +33,7 @@ bd.initialize_data()
 
 fig = plot_geometry.plot_building(bd)
 
+for sw in bd.shearwalls:
+    st.plotly_chart(sw.plot, use_container_width=True)
+
 st.plotly_chart(fig, use_container_width=True)
