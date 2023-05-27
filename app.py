@@ -33,7 +33,29 @@ bd.initialize_data()
 
 fig = plot_geometry.plot_building(bd)
 
-for sw in bd.shearwalls:
-    st.plotly_chart(sw.plot, use_container_width=True)
-
 st.plotly_chart(fig, use_container_width=True)
+for idx, tab in enumerate(st.tabs(bd.shearwall_labels)):
+    
+    with tab:
+        st.header(sw.label)
+        bd.shearwalls[idx].top_flange_width = tab.number_input("Top Flange Width (mm)", value=1400, step=50, key=f'{sw.label}_tf_w')
+        bd.shearwalls[idx].top_flange_height = tab.number_input("Top Flange Height (mm)", value=250, step=50, key=f'{sw.label}_tf_h')
+        bd.shearwalls[idx].web_width = tab.number_input("Web Width (mm)", value=250, step=50, key=f'{sw.label}_web_w')
+        bd.shearwalls[idx].web_height = tab.number_input("Web Width (mm)", value=5000, step=50, key=f'{sw.label}_web_h')
+        bd.shearwalls[idx].bot_flange_width = tab.number_input("Bottom Flange Width (mm)", value=1400, step=50, key=f'{sw.label}_bf_w')
+        bd.shearwalls[idx].bot_flange_height = tab.number_input("Bottom Flange Height (mm)", value=250, step=50, key=f'{sw.label}_bf_h')
+        # bd.initialize_data()
+        st.plotly_chart(bd.shearwalls[idx].plot, use_container_width=True)
+        st.write("Hello", )
+
+st.write(bd.shearwalls[0])
+st.write(bd.shearwalls[1])
+# st.write(bd.shearwalls[1])
+
+# for sw in bd.shearwalls:
+#     Shearwall_1, Shearwall_2 = st.tabs(bd.shearwall_labels)
+#     st.write(type(Shearwall_1[0]))
+#     with Shearwall_1:
+#         st.header("A cat")
+#         st.plotly_chart(sw.plot, use_container_width=True)
+

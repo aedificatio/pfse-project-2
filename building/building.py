@@ -81,9 +81,10 @@ class Building:
         """
         """
         shearwalls = []
+        shearwall_labels = []
         for idx in range(self.no_shearwalls):
             x = Shearwall()
-            x.label = f"Shearwall_{idx + 1}"
+            x.label = f"Shearwall {idx + 1}"
             x.height = self.height
             if idx == 0:
                 x.aligned = "left"
@@ -96,7 +97,9 @@ class Building:
             x = calculate_section(x)
             x = plot_sw(x)
             shearwalls.append(x)
+            shearwall_labels.append(x.label)
         self.shearwalls = shearwalls
+        self.shearwall_labels = shearwall_labels
         return
     
 
