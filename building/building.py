@@ -16,6 +16,7 @@ from rich import print as rprint
 from dataclasses import dataclass, field
 from typing import Dict, Optional, Tuple
 from handcalcs.decorator import handcalc
+from PyNite import FEModel3D
 import pandas as pd
 from building.plot_geometry import convert_geom_data
 
@@ -92,8 +93,8 @@ class Building:
                 sw.aligned = "right"
             else:
                 sw.aligned = "center"
-            sw.insert_point = [self.sw_insert_points[idx],0]
-            sw.calc_geom_data()
+            sw.insert_point = self.sw_insert_points[idx]
+            sw = calc_geom_data(sw)
             sw = calculate_section(sw)
             sw = plot_section(sw)
             sw.foundation = Foundation(label=f'Foundation {idx + 1}')
@@ -132,7 +133,7 @@ class Shearwall:
     bot_flange_height: int = 250  # mm
     aligned: str = 'left'  # 'left', 'center' or 'right'
     height: float = 25.0  # m
-    insert_point: list = field(default_factory=list)
+    insert_point: Optional[float] = None
     A: Optional[float] = None
     Iy: Optional[float] = None
     h: Optional[float] = None
@@ -142,46 +143,47 @@ class Shearwall:
     foundation: Optional[Foundation] = None
 
 
-    def calc_geom_data(self):
-        """
-        Returns a dictionary with nodes, edges and faces, 
-        representing the 3d geometry of a shearwall.
-        'nodes' # [[x, y, z],...] nodes in x, y, z
-        'edges' # [[i, j],...] meaning node numbers
-        'faces' # [[i, j, k],...] meaning node numbers
+def calc_geom_data(sw: Shearwall):
+    """
+    Returns a dictionary with nodes, edges and faces, 
+    representing the 3d geometry of a shearwall.
+    'nodes' # [[x, y, z],...] nodes in x, y, z
+    'edges' # [[i, j],...] meaning node numbers
+    'faces' # [[i, j, k],...] meaning node numbers
 
-        N.B.:
-        'nodes_floor' # [[x, y],...] nodes in x, y on ground level
-        'edges_floor' # [[i, j],...] meaning nodes numbers on ground level
-        """
+    N.B.:
+    'nodes_floor' # [[x, y],...] nodes in x, y on ground level
+    'edges_floor' # [[i, j],...] meaning nodes numbers on ground level
+    """
 
-        h = (self.top_flange_height / 2 + self.web_height + self.bot_flange_height / 2) / 1000
+    h = (sw.top_flange_height / 2 + sw.web_height + sw.bot_flange_height / 2) / 1000
 
-        if self.aligned == 'center':
-            nodes_floor = [[-(self.top_flange_width / 2) / 1000, h], [0, h], [(self.top_flange_width / 2) / 1000, h]]
-            nodes_floor += [[-(self.bot_flange_width / 2) / 1000, 0], [0, 0], [(self.bot_flange_width / 2) / 1000, 0]]
-            edges_floor = [[0, 1], [1, 2], [3, 4], [4, 5], [1, 4]]
-        elif self.aligned == 'left':
-            nodes_floor = [[0, h], [self.top_flange_width / 1000, h]]
-            nodes_floor += [[0, 0], [self.bot_flange_width / 1000, 0]]
-            edges_floor = [[0, 1], [2, 3], [0, 2]]
-        elif self.aligned == 'right':
-            nodes_floor = [[-self.top_flange_width / 1000, h], [0, h]]
-            nodes_floor += [[-self.bot_flange_width / 1000, 0], [0, 0]]
-            edges_floor = [[0, 1], [2, 3], [1, 3]]
-        else:
-            print("Error. No valid alignment given")
-
-        for node_floor in nodes_floor:
-            node_floor[0] += self.insert_point[0]
-            node_floor[1] += self.insert_point[1]
-
-        nodes, edges, faces = convert_geom_data(nodes_floor, edges_floor, self.height)
-
-        self.nodes = nodes
-        self.edges = edges
-        self.faces = faces
-        return
+    if sw.aligned == 'center':
+        nodes_floor = [[-(sw.top_flange_width / 2) / 1000, h], [0, h], [(sw.top_flange_width / 2) / 1000, h]]
+        nodes_floor += [[-(sw.bot_flange_width / 2) / 1000, 0], [0, 0], [(sw.bot_flange_width / 2) / 1000, 0]]
+        edges_floor = [[0, 1], [1, 2], [3, 4], [4, 5], [1, 4]]
+    elif sw.aligned == 'left':
+        nodes_floor = [[0, h], [sw.top_flange_width / 1000, h]]
+        nodes_floor += [[0, 0], [sw.bot_flange_width / 1000, 0]]
+        edges_floor = [[0, 1], [2, 3], [0, 2]]
+    elif sw.aligned == 'right':
+        nodes_floor = [[-sw.top_flange_width / 1000, h], [0, h]]
+        nodes_floor += [[-sw.bot_flange_width / 1000, 0], [0, 0]]
+        edges_floor = [[0, 1], [2, 3], [1, 3]]
+    else:
+        print("Error. No valid alignment given")
+    # st.write(nodes_floor, sw.insert_point) 
+    for node_floor in nodes_floor:
+           
+        node_floor[0] += sw.insert_point
+        # node_floor[1] += sw.insert_point[1]
+    # st.write(nodes_floor, sw.insert_point) 
+    nodes, edges, faces = convert_geom_data(nodes_floor, edges_floor, sw.height)
+    
+    sw.nodes = nodes
+    sw.edges = edges
+    sw.faces = faces
+    return sw
 
 def add_roof_faces(nodes, edges):
     """
@@ -337,3 +339,14 @@ def plot_foundation(foundation: Foundation):
 def floor(bd: Building):
     """
     """
+    nodes = bd.sw_insert_points
+    if 0.0 not in nodes:
+            nodes.append(0.0)
+
+    length = bd.width
+    if length not in nodes:
+        nodes.append(length)
+
+    # st.write(nodes)
+    return bd
+
