@@ -30,32 +30,42 @@ st.sidebar.write("")
 
 bd.initialize_data()
 
-
 fig = plot_geometry.plot_building(bd)
 
 st.plotly_chart(fig, use_container_width=True)
 for idx, tab in enumerate(st.tabs(bd.shearwall_labels)):
     
     with tab:
+        
+        sw = bd.shearwalls[idx]
         st.header(sw.label)
-        bd.shearwalls[idx].top_flange_width = tab.number_input("Top Flange Width (mm)", value=1400, step=50, key=f'{sw.label}_tf_w')
-        bd.shearwalls[idx].top_flange_height = tab.number_input("Top Flange Height (mm)", value=250, step=50, key=f'{sw.label}_tf_h')
-        bd.shearwalls[idx].web_width = tab.number_input("Web Width (mm)", value=250, step=50, key=f'{sw.label}_web_w')
-        bd.shearwalls[idx].web_height = tab.number_input("Web Width (mm)", value=5000, step=50, key=f'{sw.label}_web_h')
-        bd.shearwalls[idx].bot_flange_width = tab.number_input("Bottom Flange Width (mm)", value=1400, step=50, key=f'{sw.label}_bf_w')
-        bd.shearwalls[idx].bot_flange_height = tab.number_input("Bottom Flange Height (mm)", value=250, step=50, key=f'{sw.label}_bf_h')
-        # bd.initialize_data()
-        st.plotly_chart(bd.shearwalls[idx].plot, use_container_width=True)
-        st.write("Hello", )
+        sw.E_wall = tab.number_input("Young's Modulus", value=10000, step=100, key=f'E_sw{idx}')
+        sw.top_flange_height = tab.number_input("Top Flange Height (mm)", value=250, step=50, key=f'tf_h_sw{idx}')
+        sw.web_width = tab.number_input("Web Width (mm)", value=250, step=50, key=f'web_w_sw{idx}')
+        sw.web_height = tab.number_input("Web Height (mm)", value=5000, step=50, key=f'web_h_sw{idx}')
+        sw.bot_flange_width = tab.number_input("Bottom Flange Width (mm)", value=1400, step=50, key=f'bf_w_sw{idx}')
+        sw.bot_flange_height = tab.number_input("Bottom Flange Height (mm)", value=250, step=50, key=f'bf_h_sw{idx}')
 
-st.write(bd.shearwalls[0])
-st.write(bd.shearwalls[1])
-# st.write(bd.shearwalls[1])
+        sw = building.calculate_section(sw)
+        sw = building.plot_section(sw)
+        st.plotly_chart(bd.shearwalls[idx].plot_section, use_container_width=True)
 
-# for sw in bd.shearwalls:
-#     Shearwall_1, Shearwall_2 = st.tabs(bd.shearwall_labels)
-#     st.write(type(Shearwall_1[0]))
-#     with Shearwall_1:
-#         st.header("A cat")
-#         st.plotly_chart(sw.plot, use_container_width=True)
+        sw.pile_stiffness = tab.number_input("Pile Stiffness (kN/m)", value=100000, step=500, key=f'p_stiff_sw{idx}')
+        sw.pile_size = tab.number_input("Pile Size (mm)", value=250, step=25, key=f'p_size_sw{idx}')
+        sw.pile_grid_x = tab.number_input("Pile Grid X (mm)", value=1500, step=50, key=f'grid_x_sw{idx}')
+        sw.pile_grid_y = tab.number_input("Pile Grid Y (mm)", value=1500, step=50, key=f'grid_y_sw{idx}')
+        sw.pile_no_x = tab.number_input("Piles in X-direction", value=2, step=1, key=f'p_no_x_sw{idx}')
+        sw.pile_no_y = tab.number_input("Piles in Y-direction", value=2, step=1, key=f'p_no_y_sw{idx}')
+
+        sw = building.calculate_foundation(sw)
+        sw = building.plot_foundation(sw)
+        st.plotly_chart(bd.shearwalls[idx].plot_foundation, use_container_width=True)
+
+        st.write(f'$A     $= {sw.A:.0f} $mm^2$')
+        st.write(f'$I_y   $= {sw.Iy:.4e} $mm^4$')
+        st.write(f'$C_r   $= {sw.foundation_stiffness:.4e} $kN/m$')
+        st.write(f'$E_c   $= {sw.E_wall:.0f} $MPa$')
+
+        
+
 
