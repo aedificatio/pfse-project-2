@@ -50,20 +50,21 @@ for idx, tab in enumerate(st.tabs(bd.shearwall_labels)):
         sw = building.plot_section(sw)
         st.plotly_chart(bd.shearwalls[idx].plot_section, use_container_width=True)
 
-        sw.pile_stiffness = tab.number_input("Pile Stiffness (kN/m)", value=100000, step=500, key=f'p_stiff_sw{idx}')
-        sw.pile_size = tab.number_input("Pile Size (mm)", value=250, step=25, key=f'p_size_sw{idx}')
-        sw.pile_grid_x = tab.number_input("Pile Grid X (mm)", value=1500, step=50, key=f'grid_x_sw{idx}')
-        sw.pile_grid_y = tab.number_input("Pile Grid Y (mm)", value=1500, step=50, key=f'grid_y_sw{idx}')
-        sw.pile_no_x = tab.number_input("Piles in X-direction", value=2, step=1, key=f'p_no_x_sw{idx}')
-        sw.pile_no_y = tab.number_input("Piles in Y-direction", value=2, step=1, key=f'p_no_y_sw{idx}')
+        fd = sw.foundation
+        fd.pile_stiffness = tab.number_input("Pile Stiffness (kN/m)", value=100000, step=500, key=f'p_stiff_sw{idx}')
+        fd.pile_size = tab.number_input("Pile Size (mm)", value=250, step=25, key=f'p_size_sw{idx}')
+        fd.pile_grid_x = tab.number_input("Pile Grid X (mm)", value=1500, step=50, key=f'grid_x_sw{idx}')
+        fd.pile_grid_y = tab.number_input("Pile Grid Y (mm)", value=1500, step=50, key=f'grid_y_sw{idx}')
+        fd.pile_no_x = tab.number_input("Piles in X-direction", value=2, step=1, key=f'p_no_x_sw{idx}')
+        fd.pile_no_y = tab.number_input("Piles in Y-direction", value=2, step=1, key=f'p_no_y_sw{idx}')
 
-        sw = building.calculate_foundation(sw)
-        sw = building.plot_foundation(sw)
-        st.plotly_chart(bd.shearwalls[idx].plot_foundation, use_container_width=True)
+        fd = building.calculate_foundation(fd)
+        fd = building.plot_foundation(fd)
+        st.plotly_chart(fd.plot_foundation, use_container_width=True)
 
         st.write(f'$A     $= {sw.A:.0f} $mm^2$')
         st.write(f'$I_y   $= {sw.Iy:.4e} $mm^4$')
-        st.write(f'$C_r   $= {sw.foundation_stiffness:.4e} $kN/m$')
+        st.write(f'$C_r   $= {sw.foundation.foundation_stiffness:.4e} $kN/m$')
         st.write(f'$E_c   $= {sw.E_wall:.0f} $MPa$')
 
         

@@ -43,7 +43,6 @@ def plot_building(building):
 
     # plot cores contour & faces
     for shearwall in building.shearwalls:
-        # shearwall.calc_geom_data()
         plot_item_contour(fig, shearwall.nodes, shearwall.edges, color='rgb(255, 0, 0)', line_width=2, marker_size=2)
         plot_item_faces(fig, shearwall.nodes, shearwall.faces, opacity=0.25, color='rgb(255, 0, 0)')
     

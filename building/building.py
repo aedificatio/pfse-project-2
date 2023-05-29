@@ -83,27 +83,39 @@ class Building:
         shearwalls = []
         shearwall_labels = []
         for idx in range(self.no_shearwalls):
-            x = Shearwall()
-            x.label = f"Shearwall {idx + 1}"
-            x.height = self.height
+            sw = Shearwall()
+            sw.label = f"Shearwall {idx + 1}"
+            sw.height = self.height
             if idx == 0:
-                x.aligned = "left"
+                sw.aligned = "left"
             elif idx == self.no_shearwalls - 1:
-                x.aligned = "right"
+                sw.aligned = "right"
             else:
-                x.aligned = "center"
-            x.insert_point = [self.sw_insert_points[idx],0]
-            x.calc_geom_data()
-            x = calculate_section(x)
-            x = plot_section(x)
-            shearwalls.append(x)
-            shearwall_labels.append(x.label)
+                sw.aligned = "center"
+            sw.insert_point = [self.sw_insert_points[idx],0]
+            sw.calc_geom_data()
+            sw = calculate_section(sw)
+            sw = plot_section(sw)
+            sw.foundation = Foundation(label=f'Foundation {idx + 1}')
+            shearwalls.append(sw)
+            shearwall_labels.append(sw.label)
         self.shearwalls = shearwalls
         self.shearwall_labels = shearwall_labels
         return
     
-
-
+@dataclass
+class Foundation:
+    """
+    """
+    label: str = 'name'
+    plot_foundation: Optional[go.Figure] = None
+    pile_stiffness: Optional[float] = None
+    pile_size: Optional[int] = None
+    pile_grid_x: Optional[int] = None
+    pile_grid_y: Optional[int] = None
+    pile_no_x: Optional[int] = None
+    pile_no_y: Optional[int] = None
+    foundation_stiffness: Optional[float] = None
 
 @dataclass
 class Shearwall:
@@ -127,16 +139,7 @@ class Shearwall:
     e_top: Optional[float] = None
     e_bot: Optional[float] = None
     plot_section: Optional[go.Figure] = None
-    plot_foundation: Optional[go.Figure] = None
-    pile_stiffness: Optional[float] = None
-    pile_size: Optional[int] = None
-    pile_grid_x: Optional[int] = None
-    pile_grid_y: Optional[int] = None
-    pile_no_x: Optional[int] = None
-    pile_no_y: Optional[int] = None
-    foundation_stiffness: Optional[float] = None
-    
-
+    foundation: Optional[Foundation] = None
 
 
     def calc_geom_data(self):
@@ -216,22 +219,15 @@ def calculate_section(wall: Shearwall):
     wall.e_bot = e_bot
     return wall
 
-def calculate_foundation(wall: Shearwall):
+def calculate_foundation(foundation: Foundation):
     """
     """
-    pile_stiffness = wall.pile_stiffness
-    pile_grid_x = wall.pile_grid_x / 1000
-    pile_grid_y = wall.pile_grid_y / 1000
-    pile_no_x = wall.pile_no_x
-    pile_no_y = wall.pile_no_y
-
-    h_2 = 0.5 * (pile_no_y - 1) * pile_grid_y
-    y_s = [-h_2 + pile_grid_y * i for i in range(pile_no_y)]
-
+    h_2 = 0.5 * (foundation.pile_no_y - 1) * foundation.pile_grid_y / 1000
+    y_s = [-h_2 + foundation.pile_grid_y /1000 * i for i in range(foundation.pile_no_y)]
     
-    c_rot = [pile_stiffness * pile_no_x * i**2 for i in y_s]
-    wall.foundation_stiffness = sum(c_rot)
-    return wall
+    c_rot = [foundation.pile_stiffness * foundation.pile_no_x * i**2 for i in y_s]
+    foundation.foundation_stiffness = sum(c_rot)
+    return foundation
 
 def plot_section(wall: Shearwall):
     """
@@ -291,16 +287,16 @@ def plot_section(wall: Shearwall):
     wall.plot_section = fig
     return wall
 
-def plot_foundation(wall: Shearwall):
+def plot_foundation(foundation: Foundation):
     """
     """
     go.Figure()
     fig = go.Figure()
 
-    h_2_x = 0.5 * (wall.pile_no_x - 1) * wall.pile_grid_x
-    h_2_y = 0.5 * (wall.pile_no_y - 1) * wall.pile_grid_y
-    rows = [x * wall.pile_grid_x - h_2_x for x in range(wall.pile_no_x)]
-    cols = [y * wall.pile_grid_y - h_2_y for y in range(wall.pile_no_y)]
+    h_2_x = 0.5 * (foundation.pile_no_x - 1) * foundation.pile_grid_x
+    h_2_y = 0.5 * (foundation.pile_no_y - 1) * foundation.pile_grid_y
+    rows = [x * foundation.pile_grid_x - h_2_x for x in range(foundation.pile_no_x)]
+    cols = [y * foundation.pile_grid_y - h_2_y for y in range(foundation.pile_no_y)]
 
     coords = []
     for row in rows:
@@ -310,7 +306,7 @@ def plot_foundation(wall: Shearwall):
     for coord in coords:
         x = coord[0]
         y = coord[1]
-        delta = wall.pile_size / 2
+        delta = foundation.pile_size / 2
         corners_x = [x - delta, x - delta, x + delta, x + delta]
         corners_y = [y - delta, y + delta, y + delta, y - delta]
         fig.add_trace(go.Scatter(
@@ -328,11 +324,16 @@ def plot_foundation(wall: Shearwall):
     )
 
     fig.update_layout(
-        title = wall.label,
+        title = foundation.label,
         showlegend=False,
         width=500,
         height=600,
     )
 
-    wall.plot_foundation = fig
-    return wall
+    foundation.plot_foundation = fig
+    return foundation
+
+
+def floor(bd: Building):
+    """
+    """
