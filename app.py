@@ -1,6 +1,7 @@
 import streamlit as st
 from building import building
-from building import plot_geometry
+from building import building_plot
+from building import foundation, shearwall, windbeam
 
 st.header("Designcalculation of shearwalls.")
 st.write("NOT for use in real-life, as this is NOT a full implementation")
@@ -30,7 +31,7 @@ st.sidebar.write("")
 
 bd.initialize_data()
 
-with st.expander('SECTION', expanded=False):
+with st.expander('WALL SECTION', expanded=False):
     for idx, tab in enumerate(st.tabs(bd.shearwall_labels)):
         
         with tab:
@@ -53,10 +54,10 @@ with st.expander('SECTION', expanded=False):
             sw.E_wall = tab.number_input("Young's Modulus", value=10000, step=100, key=f'E_sw{idx}')
 
             sw = building.calculate_section(sw)
-            sw = building.plot_section(sw)
+            sw = shearwall.plot_section(sw)
             st.plotly_chart(bd.shearwalls[idx].plot_section, use_container_width=True)
 
-with st.expander('FOUNDATION PAD', expanded=False):
+with st.expander('PILE FOUNDATION', expanded=False):
     for idx, tab in enumerate(st.tabs(bd.shearwall_labels)):
         
         with tab:
@@ -68,10 +69,9 @@ with st.expander('FOUNDATION PAD', expanded=False):
             fd.pile_no_x = tab.number_input("Piles in X-direction", value=2, step=1, key=f'p_no_x_sw{idx}')
             fd.pile_no_y = tab.number_input("Piles in Y-direction", value=4, step=1, key=f'p_no_y_sw{idx}')
 
-            fd = building.calculate_foundation(fd)
-            fd = building.plot_foundation(fd)
+            fd = foundation.calculate_foundation(fd)
+            fd = foundation.plot_foundation(fd)
 
-            # with st.expander('PLOT FOUNDATION PAD'):
             st.plotly_chart(fd.plot_foundation, use_container_width=True)
 
             st.write(f'$A     $= {sw.A:.0f} $mm^2$')
@@ -82,15 +82,10 @@ with st.expander('FOUNDATION PAD', expanded=False):
 for idx, sw in enumerate(bd.shearwalls):
     bd.shearwalls[idx] = building.calc_geom_data(sw)
 
-fig = plot_geometry.plot_building(bd)
+fig = building_plot.plot_building(bd)
 with st.expander('PLOT BUILDING', expanded=False):
     st.plotly_chart(fig, use_container_width=True)
-    
 
+bd = windbeam.floor(bd)
 
-
-bd = building.floor(bd)
-st.write("Where am I?", bd.shearwalls[0])
-# st.write("Where am I?", bd.sw_insert_points)
-
-# Expander????
+# st.write("Where am I?", bd.shearwalls[0])
