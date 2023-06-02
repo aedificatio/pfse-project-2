@@ -105,7 +105,7 @@ def plot_item_contour(fig, nodes, edges, color: str='rgb(0, 0, 255)', line_width
     return fig
 
 
-def convert_geom_data(nodes_floor, edges_floor, height):
+def expand_geom_data(nodes_floor, edges_floor, height):
     """
     """
     # Add height to node coordinates

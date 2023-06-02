@@ -3,10 +3,9 @@ A module for calculating a steel beam as a crane runway beam steel stresses.
 """
 
 import streamlit as st
-import pycba as cba
+
 import numpy as np
 import matplotlib
-
 import matplotlib.pyplot as plt
 import matplotlib.markers as markers
 import matplotlib.patches as patches
@@ -16,9 +15,8 @@ from rich import print as rprint
 from dataclasses import dataclass, field
 from typing import Dict, Optional, Tuple
 from handcalcs.decorator import handcalc
-from PyNite import FEModel3D
 import pandas as pd
-from building.plot_geometry import convert_geom_data
+from building.plot_geometry import expand_geom_data
 
 
 @dataclass
@@ -57,7 +55,7 @@ class Building:
         nodes_floor = [[0, 0], [self.width, 0], [self.width, self.depth], [0, self.depth]]
         edges_floor = [[0, 1], [1, 2], [2, 3], [3, 0]]
 
-        nodes, edges, faces = convert_geom_data(nodes_floor, edges_floor, self.height)
+        nodes, edges, faces = expand_geom_data(nodes_floor, edges_floor, self.height)
 
         faces += add_roof_faces(nodes, edges)
 
@@ -141,6 +139,7 @@ class Shearwall:
     e_bot: Optional[float] = None
     plot_section: Optional[go.Figure] = None
     foundation: Optional[Foundation] = None
+    windshare: Optional[float] = None
 
 
 def calc_geom_data(sw: Shearwall):
@@ -178,7 +177,7 @@ def calc_geom_data(sw: Shearwall):
         node_floor[0] += sw.insert_point
         # node_floor[1] += sw.insert_point[1]
     # st.write(nodes_floor, sw.insert_point) 
-    nodes, edges, faces = convert_geom_data(nodes_floor, edges_floor, sw.height)
+    nodes, edges, faces = expand_geom_data(nodes_floor, edges_floor, sw.height)
     
     sw.nodes = nodes
     sw.edges = edges
@@ -406,27 +405,3 @@ def calculate_windbeam(sw_ins, windbeam_nodes):
     return wind
 
 
-@st.cache_data
-def create_windbeam(
-        E_mod: float, 
-        ixx: float, 
-        spans: Dict[int, float],
-        mass: float
-    ) -> cba.BeamAnalysis:
-    """
-    Returns a PyCBA BeamAnalysis object.
-    """
-    EI_spans:float = [E_mod * ixx / 1000] * len(spans) # kN/m2
-    supports: list[float] = [-1, 0] * (len(spans) + 1) # [rigid vertical support, no rotation capacity]
-    UDL: float = mass / 100 # kN/m1
-    
-    loads: list[Union[int, float]] = []
-    element_types: list[Union[int, float]] = []
-    for idx, span in enumerate(spans, start = 1):
-        loads.append([idx, 1, UDL, 0, 0]) # [beamnr, loadtype, force, start, stop]
-        element_types.append(1)
-
-    spans_in_m = [span / 1000 for span in list(spans.values())]
-
-    beam_model = cba.BeamAnalysis(spans_in_m, EI_spans, supports, loads, element_types)
-    return beam_model
