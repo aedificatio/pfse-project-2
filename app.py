@@ -37,6 +37,7 @@ for idx, tab in enumerate(st.tabs(bd.shearwall_labels)):
         sw = bd.shearwalls[idx]
         st.header(sw.label)
         
+
         sw.top_flange_height = tab.number_input("Top Flange Height (mm)", value=250, step=50, key=f'tf_h_sw{idx}')
         sw.web_width = tab.number_input("Web Width (mm)", value=250, step=50, key=f'web_w_sw{idx}')
         sw.web_height = tab.number_input("Web Height (mm)", value=5000, step=50, key=f'web_h_sw{idx}')
@@ -54,7 +55,9 @@ for idx, tab in enumerate(st.tabs(bd.shearwall_labels)):
 
         sw = building.calculate_section(sw)
         sw = building.plot_section(sw)
-        st.plotly_chart(bd.shearwalls[idx].plot_section, use_container_width=True)
+        with st.expander('PLOT SECTION'):
+            st.plotly_chart(bd.shearwalls[idx].plot_section, use_container_width=True)
+
 
         fd = sw.foundation
         fd.pile_stiffness = tab.number_input("Pile Stiffness (kN/m)", value=100000, step=500, key=f'p_stiff_sw{idx}')
@@ -66,7 +69,9 @@ for idx, tab in enumerate(st.tabs(bd.shearwall_labels)):
 
         fd = building.calculate_foundation(fd)
         fd = building.plot_foundation(fd)
-        st.plotly_chart(fd.plot_foundation, use_container_width=True)
+
+        with st.expander('PLOT FOUNDATION PAD'):
+            st.plotly_chart(fd.plot_foundation, use_container_width=True)
 
         st.write(f'$A     $= {sw.A:.0f} $mm^2$')
         st.write(f'$I_y   $= {sw.Iy:.4e} $mm^4$')
@@ -77,8 +82,14 @@ for idx, sw in enumerate(bd.shearwalls):
     bd.shearwalls[idx] = building.calc_geom_data(sw)
 
 fig = plot_geometry.plot_building(bd)
-st.plotly_chart(fig, use_container_width=True)
+with st.expander('PLOT BUILDING'):
+    st.plotly_chart(fig, use_container_width=True)
+    
+
+
+
 bd = building.floor(bd)
 # st.write("Where am I?", bd.shearwalls[0])
+# st.write("Where am I?", bd.sw_insert_points)
 
 # Expander????

@@ -339,14 +339,94 @@ def plot_foundation(foundation: Foundation):
 def floor(bd: Building):
     """
     """
-    nodes = bd.sw_insert_points
-    if 0.0 not in nodes:
-            nodes.append(0.0)
+    sw_ins = []
+    for sw in bd.shearwalls:
+        sw_ins.append(sw.insert_point)
+    
+    windbeam_nodes = sw_ins.copy()
+    
+    if 0.0 not in windbeam_nodes:
+            windbeam_nodes.append(0.0)
 
     length = bd.width
-    if length not in nodes:
-        nodes.append(length)
+    if length not in windbeam_nodes:
+        windbeam_nodes.append(length)
 
-    # st.write(nodes)
+    # sw_ins = sorted(sw_ins)
+    windbeam_nodes = sorted(windbeam_nodes)
+    # st.write('sw_ins', sw_ins)
+    # st.write('windbeam_nodes', windbeam_nodes)
+    spans = {}
+    
+    for idx, node in enumerate(windbeam_nodes[:-1]):
+        spans[idx] = windbeam_nodes[idx + 1] - windbeam_nodes[idx]
+    
+
+    supports = {}
+    for idx, support in enumerate(sw_ins):
+        supports[idx] = support
+
+    forces = calculate_windbeam(sw_ins, windbeam_nodes)
+    for idx, sw in enumerate(bd.shearwalls):
+        sw.windshare = forces[idx] / bd.width
+        st.write(sw.windshare)
+
+    st.write('forces', forces)
     return bd
+    
+def calculate_windbeam(sw_ins, windbeam_nodes):
+    """
+    """
+    wind = {}
+    support = False
+    remainder = 0
+    for idx, node in enumerate(windbeam_nodes):
+        if node in sw_ins: 
+            support=True 
+        else: 
+            support=False
+        
+        if support and idx == 0:
+            wind[idx] = windbeam_nodes[idx + 1] / 2
 
+        elif support and idx == len(windbeam_nodes) - 1:
+            wind[idx] = (windbeam_nodes[-1] - windbeam_nodes[-2]) / 2
+
+        elif not support and idx == 0:
+            remainder = windbeam_nodes[1] / 2
+
+        elif not support and idx == len(windbeam_nodes) - 1:
+            remainder = (windbeam_nodes[-1] - windbeam_nodes[-2]) / 2
+            wind[idx - 1] += remainder
+
+        elif support and not idx == len(windbeam_nodes) - 1:
+        
+            wind[idx] = (windbeam_nodes[idx + 1] - windbeam_nodes[idx - 1]) / 2 + remainder
+            remainder = 0
+    return wind
+
+
+@st.cache_data
+def create_windbeam(
+        E_mod: float, 
+        ixx: float, 
+        spans: Dict[int, float],
+        mass: float
+    ) -> cba.BeamAnalysis:
+    """
+    Returns a PyCBA BeamAnalysis object.
+    """
+    EI_spans:float = [E_mod * ixx / 1000] * len(spans) # kN/m2
+    supports: list[float] = [-1, 0] * (len(spans) + 1) # [rigid vertical support, no rotation capacity]
+    UDL: float = mass / 100 # kN/m1
+    
+    loads: list[Union[int, float]] = []
+    element_types: list[Union[int, float]] = []
+    for idx, span in enumerate(spans, start = 1):
+        loads.append([idx, 1, UDL, 0, 0]) # [beamnr, loadtype, force, start, stop]
+        element_types.append(1)
+
+    spans_in_m = [span / 1000 for span in list(spans.values())]
+
+    beam_model = cba.BeamAnalysis(spans_in_m, EI_spans, supports, loads, element_types)
+    return beam_model
