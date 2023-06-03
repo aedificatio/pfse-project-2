@@ -44,6 +44,7 @@ class Shearwall:
     plot_section: Optional[go.Figure] = None
     foundation: Optional[Foundation] = None
     windshare: Optional[float] = None
+    results: Optional[dict] = None
 
 
 def calc_geom_data(sw: Shearwall):

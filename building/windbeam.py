@@ -22,7 +22,6 @@ def floor(bd: Building):
     wind = calculate_windbeam(supports, windbeam_nodes)
     for idx, sw in enumerate(bd.shearwalls):
         sw.windshare = wind[idx] / bd.width
-        st.write(sw.windshare)
     return bd
     
     

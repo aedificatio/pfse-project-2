@@ -9,7 +9,6 @@ from typing import Optional
 # import streamlit as st
 
 
-# import streamlit as st
 # import numpy as np
 # import matplotlib
 # import matplotlib.pyplot as plt
@@ -39,11 +38,11 @@ class Foundation:
 def calculate_foundation(foundation: Foundation):
     """
     """
-    h_2 = 0.5 * (foundation.pile_no_y - 1) * foundation.pile_grid_y / 1000
-    y_s = [-h_2 + foundation.pile_grid_y /1000 * i for i in range(foundation.pile_no_y)]
-    
-    c_rot = [foundation.pile_stiffness * foundation.pile_no_x * i**2 for i in y_s]
-    foundation.foundation_stiffness = sum(c_rot)
+    x_NA = 0.5 * (foundation.pile_no_y - 1) * foundation.pile_grid_y / 1000
+    y_s = [-x_NA + foundation.pile_grid_y /1000 * i for i in range(foundation.pile_no_y)]
+    k_pile = foundation.pile_stiffness # kN/m1
+    C_RotPerRow = [foundation.pile_stiffness * foundation.pile_no_x * i**2 for i in y_s]
+    foundation.foundation_stiffness = sum(C_RotPerRow)
     return foundation
 
 

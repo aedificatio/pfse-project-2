@@ -1,7 +1,8 @@
 import streamlit as st
+import pandas as pd
 from building import building
 from building import building_plot
-from building import foundation, shearwall, windbeam
+from building import foundation, shearwall, windbeam, calculation
 
 st.header("Designcalculation of shearwalls.")
 st.write("NOT for use in real-life, as this is NOT a full implementation")
@@ -57,10 +58,15 @@ with st.expander('WALL SECTION', expanded=False):
             sw = shearwall.plot_section(sw)
             st.plotly_chart(bd.shearwalls[idx].plot_section, use_container_width=True)
 
+            st.write(f'$A     $= {sw.A:.0f} $mm^2$')
+            st.write(f'$I_y   $= {sw.Iy:.4e} $mm^4$')
+            st.write(f'$E_c   $= {sw.E_wall:.0f} $MPa$')
+
 with st.expander('PILE FOUNDATION', expanded=False):
     for idx, tab in enumerate(st.tabs(bd.shearwall_labels)):
         
         with tab:
+            sw = bd.shearwalls[idx]
             fd = sw.foundation
             fd.pile_stiffness = tab.number_input("Pile Stiffness (kN/m)", value=100000, step=500, key=f'p_stiff_sw{idx}')
             fd.pile_size = tab.number_input("Pile Size (mm)", value=300, step=25, key=f'p_size_sw{idx}')
@@ -71,34 +77,41 @@ with st.expander('PILE FOUNDATION', expanded=False):
 
             fd = foundation.calculate_foundation(fd)
             fd = foundation.plot_foundation(fd)
-
+            
             st.plotly_chart(fd.plot_foundation, use_container_width=True)
 
-            st.write(f'$A     $= {sw.A:.0f} $mm^2$')
-            st.write(f'$I_y   $= {sw.Iy:.4e} $mm^4$')
-            st.write(f'$C_r   $= {sw.foundation.foundation_stiffness:.4e} $kN/m$')
-            st.write(f'$E_c   $= {sw.E_wall:.0f} $MPa$')
+            st.write(f'$C_r     $= {fd.foundation_stiffness:.4e} $kNm/rad$')
 
 for idx, sw in enumerate(bd.shearwalls):
     bd.shearwalls[idx] = building.calc_geom_data(sw)
 
 fig = building_plot.plot_building(bd)
-with st.expander('PLOT BUILDING', expanded=False):
+with st.expander('PLOT BUILDING', expanded=True):
     st.plotly_chart(fig, use_container_width=True)
 
 bd = windbeam.floor(bd)
-
-with st.expander('CALCULATION', expanded=True):
+with st.expander('CALCULATION', expanded=False):
     st.write('Handcalculation')
     for idx, tab in enumerate(st.tabs(bd.shearwall_labels)):
         
         with tab:
             sw = bd.shearwalls[idx]
             st.header(sw.label)
+            sw = calculation.sw_calculation(sw, bd)
+
+
+with st.expander('SUMMARY', expanded=False):
+    cols = list(bd.shearwalls[0].results.keys())
+    results = []
+    for idx in range(len(bd.shearwall_labels)):
+        results.append(list(bd.shearwalls[idx].results.values()))
+        
+    df = pd.DataFrame(results, columns=cols, index = bd.shearwall_labels).transpose()
+    
+    st.table(df)
             
 
 
 
 
 
-# st.write("Where am I?", bd.shearwalls[0])
