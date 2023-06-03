@@ -88,4 +88,17 @@ with st.expander('PLOT BUILDING', expanded=False):
 
 bd = windbeam.floor(bd)
 
+with st.expander('CALCULATION', expanded=True):
+    st.write('Handcalculation')
+    for idx, tab in enumerate(st.tabs(bd.shearwall_labels)):
+        
+        with tab:
+            sw = bd.shearwalls[idx]
+            st.header(sw.label)
+            
+
+
+
+
+
 # st.write("Where am I?", bd.shearwalls[0])
