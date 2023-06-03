@@ -4,11 +4,11 @@ import streamlit as st
 def floor(bd: Building):
     """
     """
-    sw_ins = []
-    for sw in bd.shearwalls:
-        sw_ins.append(sw.insert_point)
-    
-    windbeam_nodes = sw_ins.copy()
+    supports = {}
+    for idx, sw in enumerate(bd.shearwalls):
+        supports[idx] = sw.insert_point
+
+    windbeam_nodes = list(supports.values())
     
     if 0.0 not in windbeam_nodes:
             windbeam_nodes.append(0.0)
@@ -16,46 +16,34 @@ def floor(bd: Building):
     length = bd.width
     if length not in windbeam_nodes:
         windbeam_nodes.append(length)
-
     
     windbeam_nodes = sorted(windbeam_nodes)
-    spans = {}
     
-    for idx, node in enumerate(windbeam_nodes[:-1]):
-        spans[idx] = windbeam_nodes[idx + 1] - windbeam_nodes[idx]
-    
-
-    supports = {}
-    for idx, support in enumerate(sw_ins):
-        supports[idx] = support
-
-    wind = calculate_windbeam(sw_ins, windbeam_nodes, supports)
+    wind = calculate_windbeam(supports, windbeam_nodes)
     for idx, sw in enumerate(bd.shearwalls):
         sw.windshare = wind[idx] / bd.width
         st.write(sw.windshare)
     return bd
     
     
-def calculate_windbeam(sw_ins, windbeam_nodes, supports):
+def calculate_windbeam(supports, windbeam_nodes):
     """
     """
     wind = {}
     support = False
     remainder = 0
     for idx, node in enumerate(windbeam_nodes):
-        if node in sw_ins: 
+        if node in supports.values(): 
             support=True 
             support_idx = [k for k, v in supports.items() if v == node][0]
         else: 
             support=False
         
         if support and idx == 0:
-            # st.write('AA')
             wind[support_idx] = windbeam_nodes[idx + 1] / 2
 
         elif support and idx == len(windbeam_nodes) - 1:
-            # st.write('LL', idx, support, 'sw_ins', sw_ins, 'windbeam_nodes', windbeam_nodes, node)
-            if len(sw_ins) == 1:
+            if len(supports) == 1:
                 wind[support_idx] = (windbeam_nodes[-1] - windbeam_nodes[-2])
             else:
                 wind[support_idx] = (windbeam_nodes[-1] - windbeam_nodes[-2]) / 2
@@ -69,7 +57,6 @@ def calculate_windbeam(sw_ins, windbeam_nodes, supports):
             wind[support_idx] += remainder
             
         elif support and not idx == len(windbeam_nodes) - 1:
-            # st.write('KK', idx, support, 'sw_ins', sw_ins, 'windbeam_nodes', windbeam_nodes, node)
             wind[support_idx] = (windbeam_nodes[idx + 1] - windbeam_nodes[idx - 1]) / 2 + remainder
             remainder = 0
     return wind
