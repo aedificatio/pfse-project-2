@@ -8,16 +8,6 @@ from typing import Optional
 from plotly import graph_objects as go
 from building.building_plot import expand_geom_data
 from building.foundation import Foundation
-# from handcalcs.decorator import handcalc
-# import streamlit as st
-
-# import numpy as np
-# import matplotlib
-# import matplotlib.pyplot as plt
-# import matplotlib.markers as markers
-# import matplotlib.patches as patches
-# import plotly.express as px
-# from rich import print as rprint
 
 
 @dataclass

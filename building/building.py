@@ -6,18 +6,6 @@ from typing import Optional
 from building.building_plot import expand_geom_data
 from building.foundation import Foundation
 from building.shearwall import Shearwall, calc_geom_data, calculate_section, plot_section
-import streamlit as st
-# from handcalcs.decorator import handcalc
-
-# from plotly import graph_objects as go
-# import plotly.express as px
-# import pandas as pd
-# from rich import print as rprint
-# import numpy as np
-# import matplotlib
-# import matplotlib.pyplot as plt
-# import matplotlib.markers as markers
-# import matplotlib.patches as patches
 
 
 @dataclass
@@ -32,6 +20,11 @@ class Building:
     no_shearwalls: Optional[int] = None
     N_vd: Optional[int] = None  # kN
     pd_wind: Optional[float] = None # kN/m2
+    floor_reactions: Optional[list] = None
+    floor_data_My: Optional[list] = None
+    floor_data_Vz: Optional[list] = None
+    floor_plot_My: Optional[list] = None
+    floor_plot_Vz: Optional[list] = None
     
 
     def initialize_data(self):

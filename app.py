@@ -37,8 +37,8 @@ with st.expander('WALL SECTION', expanded=False):
         
         with tab:
             sw = bd.shearwalls[idx]
-            st.header(sw.label)
-
+            st.subheader(sw.label)
+            sw.top_flange_width = tab.number_input("Top Flange Width (mm)", value=1400, step=50, key=f'tf_ws_sw{idx}')
             sw.top_flange_height = tab.number_input("Top Flange Height (mm)", value=250, step=50, key=f'tf_h_sw{idx}')
             sw.web_width = tab.number_input("Web Width (mm)", value=250, step=50, key=f'web_w_sw{idx}')
             sw.web_height = tab.number_input("Web Height (mm)", value=5000, step=50, key=f'web_h_sw{idx}')
@@ -67,6 +67,8 @@ with st.expander('PILE FOUNDATION', expanded=False):
         
         with tab:
             sw = bd.shearwalls[idx]
+            st.subheader(sw.label)
+
             fd = sw.foundation
             fd.pile_stiffness = tab.number_input("Pile Stiffness (kN/m)", value=100000, step=500, key=f'p_stiff_sw{idx}')
             fd.pile_size = tab.number_input("Pile Size (mm)", value=300, step=25, key=f'p_size_sw{idx}')
@@ -86,12 +88,21 @@ for idx, sw in enumerate(bd.shearwalls):
     bd.shearwalls[idx] = building.calc_geom_data(sw)
 
 fig = building_plot.plot_building(bd)
-with st.expander('PLOT BUILDING', expanded=True):
+with st.expander('PLOT BUILDING', expanded=False):
     st.plotly_chart(fig, use_container_width=True)
 
 bd = windbeam.floor(bd)
+
+with st.expander('WINDBEAM', expanded=False):
+    st.subheader('WINDBEAM')
+    st.write(f'UDL_floor = {bd.pd_wind} * ({bd.height} / {bd.no_stories}) = {bd.pd_wind * (bd.height / bd.no_stories)} kN/m1')
+    for idx in range(len(bd.shearwall_labels)):
+        st.write(f'Support {idx + 1}: {bd.floor_reactions[idx]:.2f} kN ({bd.shearwalls[idx].windshare * 100:.2f}%)')
+    st.pyplot(fig=bd.floor_plot_My)
+    st.pyplot(fig=bd.floor_plot_Vz)
+
 with st.expander('CALCULATION', expanded=False):
-    st.write('Handcalculation')
+    st.subheader('Handcalculation')
     for idx, tab in enumerate(st.tabs(bd.shearwall_labels)):
         
         with tab:
@@ -99,17 +110,21 @@ with st.expander('CALCULATION', expanded=False):
             st.header(sw.label)
             sw = calculation.sw_calculation(sw, bd)
 
-
 with st.expander('SUMMARY', expanded=False):
+    st.subheader('SUMMARY')
     cols = list(bd.shearwalls[0].results.keys())
     results = []
     for idx in range(len(bd.shearwall_labels)):
         results.append(list(bd.shearwalls[idx].results.values()))
         
     df = pd.DataFrame(results, columns=cols, index = bd.shearwall_labels).transpose()
-    
     st.table(df)
             
+
+# Refactor
+# Type hints
+# Tests
+# Docstrings
 
 
 

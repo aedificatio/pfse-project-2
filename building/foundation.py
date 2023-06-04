@@ -3,21 +3,8 @@ A module for calculating a steel beam as a crane runway beam steel stresses.
 """
 
 from plotly import graph_objects as go
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Optional
-# from handcalcs.decorator import handcalc
-# import streamlit as st
-
-
-# import numpy as np
-# import matplotlib
-# import matplotlib.pyplot as plt
-# import matplotlib.markers as markers
-# import matplotlib.patches as patches
-# import plotly.express as px
-# from rich import print as rprint
-# import pandas as pd
-# from building.building_plot import expand_geom_data
 
 
 @dataclass

@@ -26,18 +26,18 @@ def F_ktot(F_k1, F_k2):
     F_ktot = 1 / (1 / F_k1 + 1 / F_k2) # kN
     return F_ktot
 
-def UDL_wind(pd_wind, height, width, no_stories, pct_wind):
+def UDL_wind(pd_wind, width, pct_wind):
     """
 
     """
-    UDL_wind = pct_wind * width * pd_wind * (height / no_stories) # kN/m1
+    UDL_wind = pct_wind * width * pd_wind # kN/m1
     return UDL_wind
 
-def UDL_lean(height, N_vd):
+def UDL_lean(height, N_vd, pct_wind):
     """
     """
     theta_lean = 1 / 400
-    UDL_lean = theta_lean * (N_vd / height) # kN/m1
+    UDL_lean = theta_lean * ((pct_wind * N_vd) / height) # kN/m1
     return UDL_lean
 
 def UDL_tot(UDL_wind, UDL_lean):
@@ -78,18 +78,10 @@ hc_N_vd = hc_renderer(N_vd)
 hc_second_order_effect = hc_renderer(second_order_effect)
 hc_calculate_moment = hc_renderer(calculate_moment)
 
-
+# No Cache
 def sw_calculation(sw: Shearwall, bd: Building):
     """
     """
-
-    # st.subheader('Pile foundation')
-
-    # pile_foundation, _ = hc_calculate_foundation(sw.foundation)
-    # st.latex(pile_foundation)
-    # st.write(f'The rotational stiffness of the pile foundation is: {sw.foundation.foundation_stiffness:.4e} $kNm/rad$')
-    # st.divider()
-    
     st.subheader('Wall load')
     st.write(f'This shearwall takes {sw.windshare * 100:.2f}% of the windload and the stability of the building weight')
     
@@ -98,11 +90,11 @@ def sw_calculation(sw: Shearwall, bd: Building):
     st.latex(N_vd_wall_latex)
 
     st.write('\nWindload on shearwall:')
-    UDL_wind_latex, UDL_wind = hc_UDL_wind(bd.pd_wind, bd.height, bd.width, bd.no_stories, sw.windshare)
+    UDL_wind_latex, UDL_wind = hc_UDL_wind(bd.pd_wind, bd.width, sw.windshare)
     st.latex(UDL_wind_latex)
     
     st.write('\nLoad on shearwall by $\\theta_{lean}$:')
-    UDL_lean_latex, UDL_lean = hc_UDL_lean(bd.height, bd.N_vd)
+    UDL_lean_latex, UDL_lean = hc_UDL_lean(bd.height, bd.N_vd, sw.windshare)
     st.latex(UDL_lean_latex)
 
     st.write('\nTotal load on shearwall:')
@@ -133,11 +125,12 @@ def sw_calculation(sw: Shearwall, bd: Building):
     st.latex(M_SecondOrder_latex)
 
     results = {
-        'C_rot': f'{sw.foundation.foundation_stiffness:.3e} kNm/rad',
-        'N_vd_wall': f'{N_vd_wall:.0f} kN',
+        'Windshare': f'{sw.windshare * 100:.2f}%',
         'UDL_wind': f'{UDL_wind:.2f} kN/m1',
         'UDL_lean': f'{UDL_lean:.2f} kN/m1',
         'UDL_tot': f'{UDL_tot:.2f} kN/m1',
+        'C_rot': f'{sw.foundation.foundation_stiffness:.3e} kNm/rad',
+        'N_vd_wall': f'{N_vd_wall:.0f} kN',
         'F_k1': f'{F_k1:.0f} kN',
         'F_k2': f'{F_k2:.0f} kN',
         'F_ktot': f'{F_ktot:.0f} kN',
