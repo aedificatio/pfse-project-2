@@ -1,3 +1,8 @@
+"""
+This App is a designtool for shearwalls.
+'NOT for use in real-life, as this is NOT a full implementation'
+"""
+
 import streamlit as st
 import pandas as pd
 from building import building
@@ -50,7 +55,6 @@ with st.expander('WALL SECTION', expanded=False):
                 value=sw.insert_point,
                 step=1.0
             )
-            
             sw.E_wall = tab.number_input("Young's Modulus", value=10000, step=100, key=f'E_sw{idx}')
 
             sw = building.calculate_section(sw)
@@ -87,7 +91,7 @@ for idx, sw in enumerate(bd.shearwalls):
     bd.shearwalls[idx] = building.calc_geom_data(sw)
 
 fig = building_plot.plot_building(bd)
-with st.expander('PLOT BUILDING', expanded=False):
+with st.expander('PLOT BUILDING', expanded=True):
     st.plotly_chart(fig, use_container_width=True)
 
 bd = windbeam.floor(bd)

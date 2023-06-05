@@ -1,5 +1,5 @@
 """
-A module for calculating a steel beam as a crane runway beam steel stresses.
+A module for building data
 """
 from dataclasses import dataclass
 from typing import Optional
@@ -27,8 +27,13 @@ class Building:
     floor_plot_Vz: Optional[list] = None
     
 
-    def initialize_data(self):
+    def initialize_data(self) -> None:
         """
+        Function calculates/creates the following properties of a building:
+        
+        - geometry-data of the building
+        - insertion points of shearwalls
+        - create shearwalls
         """
         self.calc_geom_data()
         self.sw_insert_points()
@@ -36,10 +41,11 @@ class Building:
         return
 
 
-    def calc_geom_data(self):
+    def calc_geom_data(self) -> None:
         """
-        Returns a dictionary with nodes, edges and faces, 
-        representing the 3d geometry of the building.
+        Function calculates geometry data of the building itself. Adds variables:
+        'nodes', 'edges' and 'faces' as lists representing the 3d geometry of the building.
+
         'nodes' # [[x, y, z],...] nodes in x, y, z
         'edges' # [[i, j],...] meaning node numbers
         'faces' # [[i, j, k],...] meaning node numbers
@@ -61,8 +67,10 @@ class Building:
         return
     
 
-    def sw_insert_points(self):
+    def sw_insert_points(self) -> None:
         """
+        Function calculates the initial x-pos insert point(s of the shearwall(s)).
+        Adds variable sw_insert_points with a list of x-pos insertion points.
         """
         insertion_points = []
         if self.no_shearwalls == 1:
@@ -74,8 +82,12 @@ class Building:
         return
     
 
-    def create_shearwalls(self):
+    def create_shearwalls(self) -> None:
         """
+        Function creates the Shearwall objects of a building. Adds variables:
+
+        - 'shearwalls'      : list of shearwalls
+        - 'shearwall_labels': list of shearwall labels
         """
         shearwalls = []
         shearwall_labels = []
@@ -101,8 +113,9 @@ class Building:
         return
     
 
-def add_roof_faces(nodes, edges):
+def add_roof_faces(nodes: list[list], edges:list[list]) -> list[list]:
     """
+    Functions adds the faces for the roof of a building.
     """
     start_roof_idx = int(len(nodes) / 2)
     roof_faces = [[edges[0][0] + start_roof_idx, edges[1][0] + start_roof_idx, edges[2][0] + start_roof_idx]]

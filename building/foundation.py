@@ -1,5 +1,5 @@
 """
-A module for calculating a steel beam as a crane runway beam steel stresses.
+A module for designing a pile foundation
 """
 
 from plotly import graph_objects as go
@@ -10,6 +10,7 @@ from typing import Optional
 @dataclass
 class Foundation:
     """
+    Represents data from a pile foundation.
     """
     label: str = 'name'
     plot_foundation: Optional[go.Figure] = None
@@ -22,8 +23,10 @@ class Foundation:
     foundation_stiffness: Optional[float] = None
 
 
-def calculate_foundation(foundation: Foundation):
+def calculate_foundation(foundation: Foundation) -> Foundation:
     """
+    Takes a Foundation object and calculates the rotational stiffness.
+    Returns the Foundation with added "foundation_stiffness" variable.
     """
     x_NA = 0.5 * (foundation.pile_no_y - 1) * foundation.pile_grid_y / 1000
     y_s = [-x_NA + foundation.pile_grid_y /1000 * i for i in range(foundation.pile_no_y)]
@@ -33,8 +36,10 @@ def calculate_foundation(foundation: Foundation):
     return foundation
 
 
-def plot_foundation(foundation: Foundation):
+def plot_foundation(foundation: Foundation) -> Foundation:
     """
+    Takes a Foundation object and plots the foundation.
+    Returns the Foundation with added "plot_foundation" variable.
     """
     go.Figure()
     fig = go.Figure()

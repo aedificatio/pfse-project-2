@@ -7,60 +7,68 @@ import streamlit as st
 
 hc_renderer = handcalc(override='long', decimal_separator=',')
 
-def F_k1(E, I_y, l):
+def F_k1(E: float, I_y: float, l: float) -> float:
     """
+    Function calculates the critical load of a fixed cantilever section.
     """
     EI = (E * I_y) / 10**9 # kNm2
     F_k1 = (7.83 * EI) / l**2 # kN
     return F_k1
 
-def F_k2(C_rot, l):
+def F_k2(C_rot: float, l: float) -> float:
     """
+    Function calculates the critical load of a stiff section with a springrotation support.
     """
     F_k2 = (2 * C_rot) / l # kN
     return F_k2
 
-def F_ktot(F_k1, F_k2):
+def F_ktot(F_k1: float, F_k2: float) -> float:
     """
+    Function calculates the critical load of a section with a springrotation support.
     """
     F_ktot = 1 / (1 / F_k1 + 1 / F_k2) # kN
     return F_ktot
 
-def UDL_wind(pd_wind, width, pct_wind):
+def UDL_wind(pd_wind: float, width: float, pct_wind: float) -> float:
     """
-
+    Function calculates the UDL windload on a shearwall.
     """
     UDL_wind = pct_wind * width * pd_wind # kN/m1
     return UDL_wind
 
-def UDL_lean(height, N_vd, pct_wind):
+def UDL_lean(height: float, N_vd: float, pct_wind: float) -> float:
     """
+    Function calculates the UDL load on the shearwall due to the lean.
     """
     theta_lean = 1 / 400
     UDL_lean = theta_lean * ((pct_wind * N_vd) / height) # kN/m1
     return UDL_lean
 
-def UDL_tot(UDL_wind, UDL_lean):
+def UDL_tot(UDL_wind: float, UDL_lean: float) -> float:
     """
+    Function calculates the total UDL load on a shearwall.
     """
     UDL_tot = UDL_wind + UDL_lean # kN/m1
     return UDL_tot
 
-def N_vd(pct_wind, N_vdTot):
+def N_vd(pct_wind: float, N_vdTot: float) -> float:
     """
+    Function calculates the building mass assings to a shearwall.
     """
     N_vd = pct_wind * N_vdTot # kN
     return N_vd
 
-def second_order_effect(F_ktot, N_vd):
+def second_order_effect(F_ktot: float, N_vd: float) -> float:
     """
+    Function calculates the secondorder effects of a shearwall.
     """
     n = F_ktot / N_vd
     SecondOrderEffect = n / (n - 1)
     return n
 
-def calculate_moment(UDL_tot, l, n):
+def calculate_moment(UDL_tot: float, l: float, n: float) -> float:
     """
+    Function calculates the bending moment at groundlevel including secondorder effects.
     """
     M_FirstOrder = (1/2) * UDL_tot * l**2 # kNm
     M_SecondOrder = n / (n - 1) * M_FirstOrder # kNm
@@ -79,8 +87,25 @@ hc_second_order_effect = hc_renderer(second_order_effect)
 hc_calculate_moment = hc_renderer(calculate_moment)
 
 # No Cache
-def sw_calculation(sw: Shearwall, bd: Building):
+def sw_calculation(sw: Shearwall, bd: Building) -> Shearwall:
     """
+    Function makes handcalculation of a shearwall.
+    Returns the shearwall with added dict variable 'results':
+     
+       
+        'Windshare'
+        'UDL_wind'
+        'UDL_lean'
+        'UDL_tot'
+        'C_rot'
+        'N_vd_wall'
+        'F_k1'
+        'F_k2'
+        'F_ktot'
+        'n_value'
+        'SecondOrderEffect'
+        'M_SecondOrder'
+    
     """
     st.subheader('Wall load')
     st.write(f'This shearwall takes {sw.windshare * 100:.2f}% of the windload and the stability of the building weight')

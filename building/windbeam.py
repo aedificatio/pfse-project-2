@@ -2,14 +2,22 @@ import streamlit as st
 import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.markers as markers
-from typing import Dict
+from typing import Dict, Tuple
 from PyNite import FEModel3D
 from building.building import Building
 
 
 @st.cache_data
-def floor(bd: Building):
+def floor(bd: Building) -> Building:
     """
+    Function takes a Building object calculates the windbeam and plots the results. 
+    Returns Building with add variables: 
+
+    'floor_reactions'   : dict with Support reaction forces for each shearwall
+    'floor_data_My'     : list with My data
+    'floor_data_Vz'     : list with Vz data
+    'floor_plot_My'     : plot of My as matplotlib fig
+    'floor_plot_Vz'     : plot of Vz as matplotlib fig
     """
     supports = {}
     for idx, sw in enumerate(bd.shearwalls):
@@ -39,7 +47,15 @@ def floor(bd: Building):
     return bd
 
 @st.cache_data
-def calculate_windbeam(supports, nodes, UDL_floor):
+def calculate_windbeam(supports: dict[int, float], nodes: list[list], UDL_floor: float) -> Tuple[dict[int,float], list[list], list[list]]:
+    """
+    Function calculates the forces on a windbeam (floorlevel).
+    Returns a tuple containing:
+
+    - support_reactions : dict with support_reactions for each shearwall
+    - data_My           : list[list] with x, My data
+    - data_Vz           : list[list] with x, Vz data
+    """
     supports = list(supports.values())
     beam_model = FEModel3D()
 
@@ -113,11 +129,12 @@ def plot_MV_results(
         data_Vz,
         nodes, 
         supports
-    ) -> matplotlib.figure.Figure:
+    ) -> Tuple[matplotlib.figure.Figure]:
     
     """
-    Returns the Figure and Axes objects of the Bendingmoments and Shearforces 
-    of the envelope forces and also the forces with the crane Vehicle at a specific position.
+    Function plots the forces on a windbeam (floorlevel).
+    Returns the Figure objects of the bendingmoments and shearforces.
+    
     """
     plot_M = {
         'title': "Bending moment",
@@ -147,9 +164,10 @@ def plot_results(
     data: list[list[int]], 
     nodes: list[int],
     supports: list[int],
-) -> matplotlib.figure.Figure:
+) -> Tuple[matplotlib.figure.Figure, matplotlib.axes._axes.Axes]:
+    
     """
-    Returns a Matplotlib Axes object.
+    Plots the data and returns a Matplotlib Figure and Axes object.
     """
     fig, ax = plt.subplots()
     ax.set_title(plot_info['title'])

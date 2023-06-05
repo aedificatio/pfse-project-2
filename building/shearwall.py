@@ -1,5 +1,5 @@
 """
-A module for calculating a steel beam as a crane runway beam steel stresses.
+A module for designing concrete shearwalls.
 """
 
 import pandas as pd
@@ -13,7 +13,7 @@ from building.foundation import Foundation
 @dataclass
 class Shearwall:
     """
-    Datatype represents shearwall.
+    Represents data from a shearwall.
     """
     label: str = 'name'
     E_wall: int = 10000  # MPa
@@ -37,10 +37,11 @@ class Shearwall:
     results: Optional[dict] = None
 
 
-def calc_geom_data(sw: Shearwall):
+def calc_geom_data(sw: Shearwall) -> Shearwall:
     """
-    Returns a dictionary with nodes, edges and faces, 
-    representing the 3d geometry of a shearwall.
+    Takes a Shearwall and returns the Shearwall with added variables 
+    'nodes', 'edges' and 'faces' as lists representing the 3d geometry of a shearwall.
+
     'nodes' # [[x, y, z],...] nodes in x, y, z
     'edges' # [[i, j],...] meaning node numbers
     'faces' # [[i, j, k],...] meaning node numbers
@@ -78,8 +79,10 @@ def calc_geom_data(sw: Shearwall):
     return sw
 
 
-def calculate_section(wall: Shearwall):
+def calculate_section(wall: Shearwall) -> Shearwall:
     """
+    Takes a Shearwall object and calculates sectionproperties.
+    Returns the Shearwall with added variables A, Iy, h, e_top, e_bot.
     """
     layers = [
         [wall.top_flange_width, wall.top_flange_height],
@@ -107,8 +110,10 @@ def calculate_section(wall: Shearwall):
     return wall
 
 
-def plot_section(wall: Shearwall):
+def plot_section(wall: Shearwall) -> Shearwall:
     """
+    Takes a Shearwall object and plots the section of the shearwall.
+    Returns the Shearwall with added "plot_section" variable.
     """
     go.Figure()
     fig = go.Figure()
