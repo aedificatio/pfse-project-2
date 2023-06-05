@@ -1,13 +1,14 @@
 """
-A module for calculating a steel beam as a crane runway beam steel stresses.
+A module for plotting a building
 """
-
+from typing import Tuple
 from plotly import graph_objects as go
-# import streamlit as st
+import streamlit as st
 
 
-def plot_building(building):
+def plot_building(building) -> go.Figure:
     """
+    Plot a 3d representation of a building.
     """
     layout = go.Layout(
         autosize=False, width=1200, height=800,
@@ -16,43 +17,39 @@ def plot_building(building):
             aspectmode='data',
             aspectratio=go.layout.scene.Aspectratio(x=0.4, y=0.4, z=0.4)
         ),
-        # xaxis = dict(
-        #     scaleratio = 1,
-        # ),
-        # yaxis = dict(
-        #     # scaleratio = 1,
-        #     scaleanchor = 'x'
-        # )
     )
     fig = go.Figure(layout=layout)
     
-    # plot building contour & faces
-    # building.calc_geom_data()
-    plot_item_contour(fig, building.nodes, building.edges, color='rgb(0, 0, 255)', line_width=2, marker_size=2)
-    plot_item_faces(fig, building.nodes, building.faces, opacity=0.25, color='rgb(0, 0, 255)')
+    plot_item_contour(fig, building.nodes, building.edges, 
+                      color='rgb(0, 0, 255)', line_width=2, marker_size=2)
+    plot_item_faces(fig, building.nodes, building.faces, opacity=0.25, 
+                    color='rgb(0, 0, 255)')
 
-    # plot cores contour & faces
     for shearwall in building.shearwalls:
-        plot_item_contour(fig, shearwall.nodes, shearwall.edges, color='rgb(255, 0, 0)', line_width=2, marker_size=2)
-        plot_item_faces(fig, shearwall.nodes, shearwall.faces, opacity=0.25, color='rgb(255, 0, 0)')
+        plot_item_contour(fig, shearwall.nodes, shearwall.edges, 
+                          color='rgb(255, 0, 0)', line_width=2, marker_size=2)
+        plot_item_faces(fig, shearwall.nodes, shearwall.faces, 
+                        opacity=0.25, color='rgb(255, 0, 0)')
     
     fig.layout.height = 1000
     fig.layout.width = 1000
 
     fig.layout.scene.xaxis.range = (0, building.width * 2.2)
     fig.layout.scene.yaxis.range = (0, building.depth * 2.2)
-    # fig.layout.xaxis.scaleratio = 1
-    # fig.layout.yaxis.scaleratio = 1
-    # fig.update_scenes(Aspectratio(x=2, y=2, z=2))
     fig.update_scenes(xaxis_autorange="reversed")
-        
     return fig
 
 
-def plot_item_faces(fig, nodes, faces, opacity=0.25, color: str = 'rgb(0, 0, 255)'):
+def plot_item_faces(
+        fig: go.Figure, 
+        nodes: list[list], 
+        faces: list[list], 
+        opacity: float=0.25, 
+        color: str = 'rgb(0, 0, 255)'
+        ) -> go.Figure:
     """
+    Plot the faces of a building.
     """
-    # Add building_faces
     x, y, z = zip(*nodes)
     i, j, k = zip(*faces)
 
@@ -71,8 +68,16 @@ def plot_item_faces(fig, nodes, faces, opacity=0.25, color: str = 'rgb(0, 0, 255
     return fig
 
 
-def plot_item_contour(fig, nodes, edges, color: str='rgb(0, 0, 255)', line_width: int=2, marker_size: int =2):
+def plot_item_contour(
+        fig: go.Figure, 
+        nodes: list[list], 
+        edges: list[list], 
+        color: str='rgb(0, 0, 255)', 
+        line_width: int=2, 
+        marker_size: int =2
+        ) -> go.Figure:
     """
+    Plot the contour of a building.
     """
     for i_node, j_node in edges:
         x_coord_i, y_coord_i, z_coord_i = nodes[i_node]
@@ -95,8 +100,13 @@ def plot_item_contour(fig, nodes, edges, color: str='rgb(0, 0, 255)', line_width
     return fig
 
 
-def expand_geom_data(nodes_floor, edges_floor, height):
+def expand_geom_data(
+        nodes_floor: list[list], 
+        edges_floor: list[list], 
+        height: float
+        ) -> Tuple[list[list]]:
     """
+    Expand 2d geometry data into the 3rd dimension by adding height.
     """
     # Add height to node coordinates
     nodes = [node_floor + [0] for node_floor in nodes_floor]

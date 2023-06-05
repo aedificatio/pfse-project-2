@@ -35,6 +35,7 @@ class Shearwall:
     foundation: Optional[Foundation] = None
     windshare: Optional[float] = None
     results: Optional[dict] = None
+    results_latex: Optional[dict] = None
 
 
 def calc_geom_data(sw: Shearwall) -> Shearwall:

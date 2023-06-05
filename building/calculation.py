@@ -90,64 +90,20 @@ hc_calculate_moment = hc_renderer(calculate_moment)
 def sw_calculation(sw: Shearwall, bd: Building) -> Shearwall:
     """
     Function makes handcalculation of a shearwall.
-    Returns the shearwall with added dict variable 'results':
-     
-       
-        'Windshare'
-        'UDL_wind'
-        'UDL_lean'
-        'UDL_tot'
-        'C_rot'
-        'N_vd_wall'
-        'F_k1'
-        'F_k2'
-        'F_ktot'
-        'n_value'
-        'SecondOrderEffect'
-        'M_SecondOrder'
+    Returns the shearwall with added dict variables 
     
+    'results'           : Nicely formatted values from the calculation
+    'results_latex'     : Latex epresentation of the calculation
     """
-    st.subheader('Wall load')
-    st.write(f'This shearwall takes {sw.windshare * 100:.2f}% of the windload and the stability of the building weight')
-    
-    st.write('\nBuilding weight to stabilize:')
     N_vd_wall_latex, N_vd_wall = hc_N_vd(sw.windshare, bd.N_vd)
-    st.latex(N_vd_wall_latex)
-
-    st.write('\nWindload on shearwall:')
     UDL_wind_latex, UDL_wind = hc_UDL_wind(bd.pd_wind, bd.width, sw.windshare)
-    st.latex(UDL_wind_latex)
-    
-    st.write('\nLoad on shearwall by $\\theta_{lean}$:')
     UDL_lean_latex, UDL_lean = hc_UDL_lean(bd.height, bd.N_vd, sw.windshare)
-    st.latex(UDL_lean_latex)
-
-    st.write('\nTotal load on shearwall:')
     UDL_tot_latex, UDL_tot = hc_UDL_tot(UDL_wind, UDL_lean)
-    st.latex(UDL_tot_latex)
-    st.divider()
-
-    st.subheader('Wall capacity')
     F_k1_latex, F_k1 = hc_F_k1(sw.E_wall, sw.Iy, bd.height)
-    st.latex(F_k1_latex)
-
     F_k2_latex, F_k2 = hc_F_k2(sw.foundation.foundation_stiffness, bd.height)
-    st.latex(F_k2_latex)
-
-    # Can we put this latex line in the function?
-    st.latex('\\frac{1}{F_{ktot}} = \\frac{1}{F_{k1}} + \\frac{1}{F_{k2}}')
     F_ktot_latex, F_ktot = hc_F_ktot(F_k1, F_k2)
-    st.latex(F_ktot_latex)
-    st.divider()
-
-    st.subheader('Second order effects')
     n_latex, n_value = hc_second_order_effect(F_ktot, N_vd_wall)
-    st.latex(n_latex)
-    st.divider()
-
-    st.subheader('Moments at groundfloor level')
     M_SecondOrder_latex, M_SecondOrder = hc_calculate_moment(UDL_tot, bd.height, n_value)
-    st.latex(M_SecondOrder_latex)
 
     results = {
         'Windshare': f'{sw.windshare * 100:.2f}%',
@@ -163,8 +119,59 @@ def sw_calculation(sw: Shearwall, bd: Building) -> Shearwall:
         'SecondOrderEffect': f'{(n_value / (n_value - 1) - 1) * 100:.2f}%',
         'M_SecondOrder': f'{M_SecondOrder:.0f} kNm',
     }
+    results_latex = {
+        'UDL_wind': UDL_wind_latex,
+        'UDL_lean': UDL_lean_latex,
+        'UDL_tot': UDL_tot_latex,
+        'N_vd_wall': N_vd_wall_latex,
+        'F_k1': F_k1_latex,
+        'F_k2': F_k2_latex,
+        'F_ktot': F_ktot_latex,
+        'n_latex': n_latex,
+        'M_SecondOrder': M_SecondOrder_latex
+    }
     sw.results = results
+    sw.results_latex = results_latex
     return sw
+
+
+def display_sw_calculation(sw: Shearwall) -> None:
+    """
+    Function displays the latex handcalculation of a shearwall.
+    """
+    st.subheader('Wall load')
+    st.write(f'This shearwall takes {sw.windshare * 100:.2f}% of the windload and the stability of the building weight')
+    
+    st.write('\nBuilding weight to stabilize:')
+    st.latex(sw.results_latex["N_vd_wall"])
+
+    st.write('\nWindload on shearwall:')
+    st.latex(sw.results_latex["UDL_wind"])
+    
+    st.write('\nLoad on shearwall by $\\theta_{lean}$:')
+    st.latex(sw.results_latex["UDL_lean"])
+
+    st.write('\nTotal load on shearwall:')
+    st.latex(sw.results_latex["UDL_tot"])
+    st.divider()
+
+    st.subheader('Wall capacity')
+    st.latex(sw.results_latex["F_k1"])
+
+    st.latex(sw.results_latex["F_k2"])
+
+    # Can we put this latex line in the function?
+    st.latex('\\frac{1}{F_{ktot}} = \\frac{1}{F_{k1}} + \\frac{1}{F_{k2}}')
+    st.latex(sw.results_latex["F_ktot"])
+    st.divider()
+
+    st.subheader('Second order effects')
+    st.latex(sw.results_latex["n_latex"])
+    st.divider()
+
+    st.subheader('Moments at groundfloor level')
+    st.latex(sw.results_latex["M_SecondOrder"])
+
 
 
 

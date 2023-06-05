@@ -59,6 +59,7 @@ with st.expander('WALL SECTION', expanded=False):
 
             sw = building.calculate_section(sw)
             sw = shearwall.plot_section(sw)
+            bd = windbeam.floor(bd)
             st.plotly_chart(bd.shearwalls[idx].plot_section, use_container_width=True)
 
             st.write(f'$A     $= {sw.A:.0f} $mm^2$')
@@ -112,6 +113,7 @@ with st.expander('CALCULATION', expanded=False):
             sw = bd.shearwalls[idx]
             st.header(sw.label)
             sw = calculation.sw_calculation(sw, bd)
+            calculation.display_sw_calculation(sw)   
 
 with st.expander('SUMMARY', expanded=False):
     st.subheader('SUMMARY')
@@ -119,15 +121,9 @@ with st.expander('SUMMARY', expanded=False):
     results = []
     for idx in range(len(bd.shearwall_labels)):
         results.append(list(bd.shearwalls[idx].results.values()))
-        
     df = pd.DataFrame(results, columns=cols, index = bd.shearwall_labels).transpose()
     st.table(df)
-            
 
-# Refactor
-# Type hints
-# Tests
-# Docstrings
 
 
 

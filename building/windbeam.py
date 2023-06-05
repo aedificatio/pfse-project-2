@@ -7,7 +7,6 @@ from PyNite import FEModel3D
 from building.building import Building
 
 
-@st.cache_data
 def floor(bd: Building) -> Building:
     """
     Function takes a Building object calculates the windbeam and plots the results. 
@@ -22,7 +21,7 @@ def floor(bd: Building) -> Building:
     supports = {}
     for idx, sw in enumerate(bd.shearwalls):
         supports[idx] = sw.insert_point
-
+        
     nodes = list(supports.values())
     if 0.0 not in nodes:
             nodes.append(0.0)
@@ -47,7 +46,11 @@ def floor(bd: Building) -> Building:
     return bd
 
 @st.cache_data
-def calculate_windbeam(supports: dict[int, float], nodes: list[list], UDL_floor: float) -> Tuple[dict[int,float], list[list], list[list]]:
+def calculate_windbeam(
+    supports: dict[int, float], 
+    nodes: list[list], 
+    UDL_floor: float
+    ) -> Tuple[dict[int,float], list[list], list[list]]:
     """
     Function calculates the forces on a windbeam (floorlevel).
     Returns a tuple containing:
@@ -165,7 +168,6 @@ def plot_results(
     nodes: list[int],
     supports: list[int],
 ) -> Tuple[matplotlib.figure.Figure, matplotlib.axes._axes.Axes]:
-    
     """
     Plots the data and returns a Matplotlib Figure and Axes object.
     """
