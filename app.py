@@ -7,7 +7,6 @@ from building import foundation, shearwall, windbeam, calculation
 st.header("Designcalculation of shearwalls.")
 st.write("NOT for use in real-life, as this is NOT a full implementation")
 
-# Building Parameters
 st.sidebar.header("Building Parameters")
 bd = building.Building()
 bd.width = st.sidebar.number_input("Building Width (m)", value=50, step=1)
@@ -96,8 +95,8 @@ bd = windbeam.floor(bd)
 with st.expander('WINDBEAM', expanded=False):
     st.subheader('WINDBEAM')
     st.write(f'UDL_floor = {bd.pd_wind} * ({bd.height} / {bd.no_stories}) = {bd.pd_wind * (bd.height / bd.no_stories)} kN/m1')
-    for idx in range(len(bd.shearwall_labels)):
-        st.write(f'Support {idx + 1}: {bd.floor_reactions[idx]:.2f} kN ({bd.shearwalls[idx].windshare * 100:.2f}%)')
+    # for idx in range(len(bd.shearwall_labels)):
+    #     st.write(f'Support {idx + 1}: {bd.floor_reactions[idx]:.2f} kN ({bd.shearwalls[idx].windshare * 100:.2f}%)')
     st.pyplot(fig=bd.floor_plot_My)
     st.pyplot(fig=bd.floor_plot_Vz)
 
