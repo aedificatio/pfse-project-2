@@ -7,6 +7,7 @@ import streamlit as st
 
 hc_renderer = handcalc(override='long', decimal_separator=',')
 
+
 def F_k1(E: float, I_y: float, l: float) -> float:
     """
     Function calculates the critical load of a fixed cantilever section.
@@ -15,12 +16,14 @@ def F_k1(E: float, I_y: float, l: float) -> float:
     F_k1 = (7.83 * EI) / l**2 # kN
     return F_k1
 
+
 def F_k2(C_rot: float, l: float) -> float:
     """
     Function calculates the critical load of a stiff section with a springrotation support.
     """
     F_k2 = (2 * C_rot) / l # kN
     return F_k2
+
 
 def F_ktot(F_k1: float, F_k2: float) -> float:
     """
@@ -29,12 +32,14 @@ def F_ktot(F_k1: float, F_k2: float) -> float:
     F_ktot = 1 / (1 / F_k1 + 1 / F_k2) # kN
     return F_ktot
 
+
 def UDL_wind(pd_wind: float, width: float, pct_wind: float) -> float:
     """
     Function calculates the UDL windload on a shearwall.
     """
     UDL_wind = pct_wind * width * pd_wind # kN/m1
     return UDL_wind
+
 
 def UDL_lean(height: float, N_vd: float, pct_wind: float) -> float:
     """
@@ -44,12 +49,14 @@ def UDL_lean(height: float, N_vd: float, pct_wind: float) -> float:
     UDL_lean = theta_lean * ((pct_wind * N_vd) / height) # kN/m1
     return UDL_lean
 
+
 def UDL_tot(UDL_wind: float, UDL_lean: float) -> float:
     """
     Function calculates the total UDL load on a shearwall.
     """
     UDL_tot = UDL_wind + UDL_lean # kN/m1
     return UDL_tot
+
 
 def N_vd(pct_wind: float, N_vdTot: float) -> float:
     """
@@ -58,6 +65,7 @@ def N_vd(pct_wind: float, N_vdTot: float) -> float:
     N_vd = pct_wind * N_vdTot # kN
     return N_vd
 
+
 def second_order_effect(F_ktot: float, N_vd: float) -> float:
     """
     Function calculates the secondorder effects of a shearwall.
@@ -65,6 +73,7 @@ def second_order_effect(F_ktot: float, N_vd: float) -> float:
     n = F_ktot / N_vd
     SecondOrderEffect = n / (n - 1)
     return n
+
 
 def calculate_moment(UDL_tot: float, l: float, n: float) -> float:
     """
@@ -85,6 +94,7 @@ hc_UDL_tot = hc_renderer(UDL_tot)
 hc_N_vd = hc_renderer(N_vd)
 hc_second_order_effect = hc_renderer(second_order_effect)
 hc_calculate_moment = hc_renderer(calculate_moment)
+
 
 # No Cache
 def sw_calculation(sw: Shearwall, bd: Building) -> Shearwall:
@@ -172,13 +182,3 @@ def display_sw_calculation(sw: Shearwall) -> None:
     st.subheader('Moments at groundfloor level')
     st.latex(sw.results_latex["M_SecondOrder"])
 
-
-
-
-
-
-
-    
-
-
-    
